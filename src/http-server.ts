@@ -169,7 +169,7 @@ class GHLMCPHttpServer {
   private setupMCPHandlers(serverInstance?: Server): void {     
     const s = serverInstance || this.server;
     // Handle list tools requests
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+    s.setRequestHandler(ListToolsRequestSchema, async () => {
       console.log('[GHL MCP HTTP] Listing available tools...');
       
       try {
@@ -226,7 +226,7 @@ class GHLMCPHttpServer {
     });
 
     // Handle tool execution requests
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    s.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
       
       console.log(`[GHL MCP HTTP] Executing tool: ${name}`);
