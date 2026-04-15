@@ -384,26 +384,36 @@ class GHLMCPHttpServer {
       }
     };
 
-    // Handle both GET and POST for SSE (MCP protocol requirements)
+// Handle both GET and POST for SSE (MCP protocol requirements)
     this.app.get('/sse', handleSSE);
     this.app.post('/sse', handleSSE);
 
-    // Root endpoint with server info
-    this.app.get('/', (req, res) => {
-      res.json({
-        name: 'GoHighLevel MCP Server',
-        version: '1.0.0',
-        status: 'running',
-        endpoints: {
-          health: '/health',
-          capabilities: '/capabilities',
-          tools: '/tools',
-          sse: '/sse'
-        },
-        tools: this.getToolsCount(),
-        documentation: 'https://github.com/your-repo/ghl-mcp-server'
-      });
-    });
+    // Streamable HTTP endpoint for Cowork/Claude MCP connection
+    const handleStreamable = async (req: express.Request, res: express.Response) => {
+      try {
+        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+        const freshServer = new Server(
+          { name: 'ghl-mcp-server', version: '1.0.0' },
+          { capabilities: { tools: {} } }
+        );
+        this.setupMCPHandlers(freshServer);
+        await freshServer.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+        res.on('close', async () => {
+          await transport.close();
+          await freshServer.close();
+        });
+      } catch (error) {
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      }
+    };
+    this.app.post('/mcp', handleStreamable);
+    this.app.get('/mcp', handleStreamable);
+    this.app.post('/', handleStreamable);
+    this.app.get('/', handleStreamable);
+
   }
 
   /**
