@@ -166,7 +166,8 @@ class GHLMCPHttpServer {
   /**
    * Setup MCP request handlers
    */
-  private setupMCPHandlers(): void {
+  private setupMCPHandlers(serverInstance?: Server): void {     
+    const s = serverInstance || this.server;
     // Handle list tools requests
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       console.log('[GHL MCP HTTP] Listing available tools...');
